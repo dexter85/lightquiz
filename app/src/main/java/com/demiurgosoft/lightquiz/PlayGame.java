@@ -2,6 +2,8 @@ package com.demiurgosoft.lightquiz;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.AnimatedStateListDrawable;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -17,20 +19,26 @@ import android.widget.Toast;
 
 import java.io.IOException;
 
+import static android.graphics.Color.GREEN;
+import static com.demiurgosoft.lightquiz.R.id.answer_1;
+
 
 public class PlayGame extends ActionBarActivity {
     private final int questionsDelay = 500;
-    private final int questionsPoints = 10;
+    private final int questionsPoints = 1;
     private final int questionSeconds = 8;
     private int points;
-    private int lives;
+    private int wrongAnswer;
     private int correctAnswer;
+
+    private boolean pauseMode = false;
     //Layout Stuff
     private ImageView correctImg;
     private ImageView wrongImg;
     private ImageView questionImg;
     private TextView questionText;
     private Button soundButton;
+    private Button nextQuestionButton;
     private TextView pointsText;
     private TextView lifeText;
     private TextView countdownText;
@@ -119,11 +127,13 @@ public class PlayGame extends ActionBarActivity {
 
     //an answer was clicked
     public void answerClicked(View view) {
+        pauseMode = true;
+        nextQuestionButton.setVisibility(View.VISIBLE);
         countdown.cancel();
         int answer; //-1 by default
         buttonsActive(false);
         switch (view.getId()) {
-            case R.id.answer_1:
+            case answer_1:
                 answer = 1;
                 break;
             case R.id.answer_2:
@@ -138,10 +148,23 @@ public class PlayGame extends ActionBarActivity {
             default:
                 throw new RuntimeException("Unknown button ID");
         }
-        if (correctAnswer == answer) correctAnswer();
-        else wrongAnswer();
         updateTexts();
-        nextQuestion();
+        if (correctAnswer == answer) {
+            highlightAnswers();
+            correctAnswer();
+        } else {
+            wrongAnswer();
+            highlightAnswers(answer);
+        }
+        updateTexts();
+    }
+
+    public void nextQuestion(View view) {
+        if (pauseMode) {
+            pauseMode = false;
+            nextQuestionButton.setVisibility(View.INVISIBLE);
+            nextQuestion();
+        }
     }
 
     public void soundClick(View view) {
@@ -170,9 +193,10 @@ public class PlayGame extends ActionBarActivity {
 
             if (!quest.isValid()) throw new RuntimeException("Invalid Question");
             this.correctAnswer = quest.getCorrectAnswer();
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 4; i++) {
                 answerButtons[i].setText(quest.getAnswer(i)); //set questions layout
-
+                answerButtons[i].setBackgroundResource(android.R.drawable.btn_default);
+            }
             hideAnswerImage();
             questionText.setText(quest.getText());
             QuestionType qt = quest.type();
@@ -193,7 +217,7 @@ public class PlayGame extends ActionBarActivity {
             countdown = new CountDownTimer(questionSeconds * 1000, 500) {
                 @Override
                 public void onTick(long millisUntilFinished) {
-                    countdownText.setText(Integer.toString((int) (millisUntilFinished / 1000) + 1));
+                    //countdownText.setText(Integer.toString((int) (millisUntilFinished / 1000) + 1));
             /* if(millisUntilFinished/1000 == 1) {
                  wrongAnswer();
                  updateTexts();
@@ -203,12 +227,14 @@ public class PlayGame extends ActionBarActivity {
 
                 @Override
                 public void onFinish() {
+                    /*
                     buttonsActive(false);
                     wrongAnswer();
                     updateTexts();
                     nextQuestion();
+                    */
                 }
-            }.start();
+            };
         }
     }
 
@@ -243,22 +269,33 @@ public class PlayGame extends ActionBarActivity {
             }, questionsDelay);
         }
 
+
+    private void highlightAnswers() {
+        answerButtons[correctAnswer - 1].setBackgroundColor(Color.GREEN);
+    }
+
+    private void highlightAnswers(int wrongAnswer) {
+        highlightAnswers();
+        answerButtons[wrongAnswer - 1].setBackgroundColor(Color.RED);
+    }
+
     //What happens when a correct answer was clicked
     private void correctAnswer() {
         points += questionsPoints;
-        wrongImg.setVisibility(View.INVISIBLE);
-        correctImg.setVisibility(View.VISIBLE);
+        //wrongImg.setVisibility(View.INVISIBLE);
+        //correctImg.setVisibility(View.VISIBLE);
         ((LightQuiz) this.getApplicationContext()).soundHandler.playCorrectSound();
     }
 
     //What happens when a wrong answer was clicked
     private void wrongAnswer() {
-        correctImg.setVisibility(View.INVISIBLE);
-        wrongImg.setVisibility(View.VISIBLE);
+        //correctImg.setVisibility(View.INVISIBLE);
+        //wrongImg.setVisibility(View.VISIBLE);
         ((LightQuiz) this.getApplicationContext()).soundHandler.playWrongSound();
-        lives--;
-        if (lives == 0) gameOver();
+        wrongAnswer++;
+        // if (lives == 0) gameOver();
     }
+
 
     //Hides any answer image (tick or cross)
     private void hideAnswerImage() {
@@ -286,14 +323,15 @@ public class PlayGame extends ActionBarActivity {
         answerButtons[1] = (Button) findViewById(R.id.answer_2);
         answerButtons[2] = (Button) findViewById(R.id.answer_3);
         answerButtons[3] = (Button) findViewById(R.id.answer_4);
+        nextQuestionButton = (Button) findViewById(R.id.next_question);
 
         hideAnswerImage();
     }
 
     //Updates life and score texts
     private void updateTexts() {
-        lifeText.setText("Life:" + lives);
-        pointsText.setText("Score:" + points);
+        lifeText.setText("Error:" + wrongAnswer);
+        pointsText.setText("Ok:" + points);
         countdownText.setText("");
     }
 
@@ -320,7 +358,7 @@ public class PlayGame extends ActionBarActivity {
     //Starts game
     private void startGame() {
         points = 0;
-        lives = 3;
+        wrongAnswer = 0;
         gameFinished = false;
         buttonsActive(true);
         updateTexts();

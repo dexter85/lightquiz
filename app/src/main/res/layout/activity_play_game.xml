@@ -6,7 +6,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context=".com.demiurgosoft.lightquiz.PlayGame">
+    tools:context="com.demiurgosoft.lightquiz.PlayGame">
 
     <ImageView
         android:id="@+id/question_image"
@@ -115,8 +115,8 @@
 
     <TextView
         android:id="@+id/life_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
@@ -124,6 +124,18 @@
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:textColor="#ee2222"
         android:textSize="30sp" />
+
+    <Button
+        android:id="@+id/next_question"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_gravity="center_horizontal"
+        android:text="NEXT"
+        android:textSize="22sp"
+        android:onClick="nextQuestion"
+        android:visibility="invisible" />
+
 
     <TextView
         android:id="@+id/countdown_text"
